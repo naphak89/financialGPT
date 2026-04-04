@@ -1,0 +1,28 @@
+# API
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+python-multipart==0.0.17
+pydantic-settings==2.6.1
+email-validator==2.2.0
+
+# Auth (bcrypt directly — passlib is unmaintained and breaks on bcrypt 4.1+)
+python-jose[cryptography]==3.3.0
+bcrypt>=4.0.0
+
+# DB
+sqlalchemy==2.0.36
+
+# News headlines (yfinance); market OHLC is Alpha Vantage only (see ALPHA_VANTAGE_API_KEY)
+yfinance>=0.2.40
+pandas>=2.0.0
+requests>=2.28.0
+
+# LangChain (flexible pins — resolver picks compatible langchain-core)
+python-dotenv==1.0.1
+langchain>=0.3.0
+langchain-community>=0.3.0
+langchain-core>=0.3.0,<0.4.0
+langchain-nvidia-ai-endpoints>=0.3.0
+langchain-deepseek>=0.1.0
+chromadb>=0.5.0
+openai>=1.31.0
