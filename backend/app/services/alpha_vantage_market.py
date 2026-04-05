@@ -5,9 +5,9 @@ Free tier: ~25 requests/day.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
-import pandas as pd
 import requests
 
 _AV_URL = "https://www.alphavantage.co/query"
@@ -68,7 +68,11 @@ def fetch_daily_ohlcv(
     o, h, l_, c, v = [], [], [], [], []
     for d in dates:
         row = series[d]
-        ts = int(pd.Timestamp(d).timestamp())
+        ts = int(
+            datetime.strptime(d, "%Y-%m-%d")
+            .replace(tzinfo=timezone.utc)
+            .timestamp()
+        )
         t_list.append(ts)
         o.append(float(row["1. open"]))
         h.append(float(row["2. high"]))
