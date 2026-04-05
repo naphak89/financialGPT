@@ -51,6 +51,10 @@ Important environment variables:
 
 RAG keys can live in `backend/.env` or `langchain-rag-tutorial/.env` (both are loaded by the RAG service).
 
+### Vercel / serverless backend
+
+Vercel’s filesystem is **read-only** except **`/tmp`**, so the default SQLite path under `backend/` fails at startup. When **`VERCEL`** is set (automatic on Vercel), the app uses **`sqlite:////tmp/users.db`** instead. That file is **ephemeral** (can disappear on cold starts). For **durable** accounts in production, point **`DATABASE_URL`** at a hosted database (e.g. Postgres) and add the matching driver to `requirements.txt`.
+
 ## Frontend
 
 ```bash

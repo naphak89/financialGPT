@@ -1,11 +1,20 @@
+import os
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent
 _REPO_ROOT = _BACKEND_ROOT.parent
 _DEFAULT_CHROMA = _REPO_ROOT / "langchain-rag-tutorial" / "chroma"
+
+
+def _default_sqlite_url() -> str:
+    # Vercel serverless: only /tmp is writable; project dir is read-only → SQLite fails there.
+    if os.environ.get("VERCEL"):
+        return "sqlite:////tmp/users.db"
+    return f"sqlite:///{_BACKEND_ROOT / 'users.db'}"
 
 
 class Settings(BaseSettings):
@@ -21,7 +30,8 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000"
 
-    database_url: str = f"sqlite:///{_BACKEND_ROOT / 'users.db'}"
+    # Override with DATABASE_URL in production (e.g. Postgres on Neon). Env wins over default.
+    database_url: str = Field(default_factory=_default_sqlite_url)
 
     chroma_path: str = str(_DEFAULT_CHROMA)
 
