@@ -20,7 +20,7 @@ Headlines come from **`Ticker.news`** first; if that is empty or errors, the bac
 
 ## Education mode and RAG
 
-**Indexing (offline).** Documents are split with a recursive character splitter (chunk size 300, overlap 100 in the tutorial script), with `add_start_index` so offsets into the original file are available where the loader provides them. Chunks are embedded with **NVIDIAEmbeddings** and stored in **Chroma** under `langchain-rag-tutorial/chroma` (or the path you set in `CHROMA_PATH`).
+**Indexing (offline).** Documents are split with a recursive character splitter (chunk size 300, overlap 100 in the tutorial script), with `add_start_index` so offsets into the original file are available where the loader provides them. Chunks are embedded with **NVIDIAEmbeddings** and stored in **Chroma** under **`backend/chroma/`** (same path the FastAPI RAG service reads; override with `CHROMA_PATH` only if needed).
 
 **Query (online).** When you ask a question, the system:
 

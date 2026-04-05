@@ -35,7 +35,7 @@ def run_rag(question: str) -> tuple[str, list[dict], bool]:
     if not os.path.isdir(chroma):
         return (
             "The knowledge base is not available on the server (Chroma path missing). "
-            "Set CHROMA_PATH or build the index under langchain-rag-tutorial/chroma.",
+            "Set CHROMA_PATH or build the index under backend/chroma (see langchain-rag-tutorial/create_database.py).",
             [],
             True,
         )

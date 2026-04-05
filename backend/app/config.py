@@ -6,8 +6,6 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent
-_REPO_ROOT = _BACKEND_ROOT.parent
-_DEFAULT_CHROMA = _REPO_ROOT / "langchain-rag-tutorial" / "chroma"
 
 
 def _default_sqlite_url() -> str:
@@ -18,11 +16,8 @@ def _default_sqlite_url() -> str:
 
 
 def _default_chroma_path() -> str:
-    # Optional: copy your built index to backend/chroma/ so it ships with the API (e.g. Vercel).
-    bundled = _BACKEND_ROOT / "chroma"
-    if bundled.is_dir():
-        return str(bundled)
-    return str(_DEFAULT_CHROMA)
+    """Single RAG store: `backend/chroma/` (embeddings + chunks). Override with CHROMA_PATH if needed."""
+    return str(_BACKEND_ROOT / "chroma")
 
 
 class Settings(BaseSettings):

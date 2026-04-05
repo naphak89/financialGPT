@@ -5,6 +5,5 @@ __pycache__/
 *.pyc
 .next/
 node_modules/
-langchain-rag-tutorial/chroma/
 langchain-rag-tutorial/
 .venv/
