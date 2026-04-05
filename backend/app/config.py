@@ -17,6 +17,14 @@ def _default_sqlite_url() -> str:
     return f"sqlite:///{_BACKEND_ROOT / 'users.db'}"
 
 
+def _default_chroma_path() -> str:
+    # Optional: copy your built index to backend/chroma/ so it ships with the API (e.g. Vercel).
+    bundled = _BACKEND_ROOT / "chroma"
+    if bundled.is_dir():
+        return str(bundled)
+    return str(_DEFAULT_CHROMA)
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=str(_BACKEND_ROOT / ".env"),
@@ -33,7 +41,7 @@ class Settings(BaseSettings):
     # Override with DATABASE_URL in production (e.g. Postgres on Neon). Env wins over default.
     database_url: str = Field(default_factory=_default_sqlite_url)
 
-    chroma_path: str = str(_DEFAULT_CHROMA)
+    chroma_path: str = Field(default_factory=_default_chroma_path)
 
     # Required for /market: https://www.alphavantage.co/support/#api-key
     alpha_vantage_api_key: str = ""

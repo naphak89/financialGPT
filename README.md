@@ -39,14 +39,14 @@ Password hashing uses the **`bcrypt`** package directly (not passlib). If you pr
 ### Market & news data
 
 - **Market:** **`ALPHA_VANTAGE_API_KEY`** is **required** in `backend/.env`. Prices come from Alpha Vantage **`TIME_SERIES_DAILY`** only (daily bars; free tier has rate limits). There is no Yahoo/yfinance price path.
-- **News:** tries **yfinance** headlines first; if that fails, **Yahoo Finance RSS** (no key).
+- **News:** locally, **yfinance** first, then **Yahoo Finance RSS**. On **Vercel**, **RSS is tried first** (yfinance is often blocked or unstable on serverless).
 
 Important environment variables:
 
 - `ALPHA_VANTAGE_API_KEY` — required for `/market/data`
 - `JWT_SECRET` — use a long random string in production
 - `CORS_ORIGINS` — default `http://localhost:3000`
-- `CHROMA_PATH` — optional; defaults to `../langchain-rag-tutorial/chroma`
+- `CHROMA_PATH` — optional; defaults to `../langchain-rag-tutorial/chroma` locally, or **`backend/chroma/`** if that folder exists (use this on Vercel: copy your built Chroma index into `backend/chroma/` before deploy, or set `CHROMA_PATH` explicitly)
 - `FINNHUB_API_KEY` — optional; not used by market/news in the current code
 
 RAG keys can live in `backend/.env` or `langchain-rag-tutorial/.env` (both are loaded by the RAG service).
@@ -54,6 +54,8 @@ RAG keys can live in `backend/.env` or `langchain-rag-tutorial/.env` (both are l
 ### Vercel / serverless backend
 
 Vercel’s filesystem is **read-only** except **`/tmp`**, so the default SQLite path under `backend/` fails at startup. When **`VERCEL`** is set (automatic on Vercel), the app uses **`sqlite:////tmp/users.db`** instead. That file is **ephemeral** (can disappear on cold starts). For **durable** accounts in production, point **`DATABASE_URL`** at a hosted database (e.g. Postgres) and add the matching driver to `requirements.txt`.
+
+**Education / RAG on Vercel:** the LangChain index under `langchain-rag-tutorial/chroma` is usually **not** in the deployment bundle. Build the index locally, then copy the **`chroma` folder contents** into **`backend/chroma/`** in the repo (or set **`CHROMA_PATH`** to a folder that exists in the deployed artifact). Without that, education mode returns the “knowledge base is not available” message.
 
 ## Frontend
 

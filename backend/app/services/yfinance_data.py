@@ -23,10 +23,21 @@ _HTTP.headers.update(
 )
 
 
+def _json_safe(v: Any) -> Any:
+    if v is None or isinstance(v, (str, int, float, bool)):
+        return v
+    if hasattr(v, "item"):  # numpy scalar
+        try:
+            return v.item()
+        except Exception:
+            return str(v)
+    return str(v)
+
+
 def fetch_news(symbol: str, limit: int = 50) -> tuple[list[dict[str, Any]], str | None]:
     sym = symbol.upper().strip()
-    ticker = yf.Ticker(sym, session=_HTTP)
     try:
+        ticker = yf.Ticker(sym, session=_HTTP)
         raw = ticker.news
     except Exception as e:
         return [], f"yfinance news failed: {e}"
@@ -35,13 +46,20 @@ def fetch_news(symbol: str, limit: int = 50) -> tuple[list[dict[str, Any]], str 
         return [], "No news returned for this symbol."
 
     articles: list[dict[str, Any]] = []
-    for item in raw[:limit]:
+    try:
+        seq = list(raw)[:limit] if raw is not None else []
+    except Exception as e:
+        return [], f"yfinance news failed: {e}"
+
+    for item in seq:
+        if not isinstance(item, dict):
+            continue
         articles.append(
             {
-                "headline": item.get("title") or "Untitled",
-                "url": item.get("link") or "#",
-                "source": item.get("publisher") or "Yahoo Finance",
-                "datetime": item.get("providerPublishTime"),
+                "headline": str(item.get("title") or "Untitled"),
+                "url": str(item.get("link") or "#"),
+                "source": str(item.get("publisher") or "Yahoo Finance"),
+                "datetime": _json_safe(item.get("providerPublishTime")),
             }
         )
 
