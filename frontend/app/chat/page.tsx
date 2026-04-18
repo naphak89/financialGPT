@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   clearToken,
@@ -85,18 +86,20 @@ export default function ChatPage() {
           symbol: symbol.trim().toUpperCase(),
           resolution: "D",
           days,
+          question: q,
         })) as MarketPayload;
         assistant = {
           id: crypto.randomUUID(),
           role: "assistant",
           mode,
-          text: "",
+          text: data.answer?.trim() ?? "",
           payload: data,
         };
       } else if (mode === "news") {
         const data = (await newsData({
           symbol: symbol.trim().toUpperCase(),
           days,
+          question: q,
         })) as NewsPayload;
         const n = data.articles?.length ?? 0;
         const srcLabel =
@@ -105,11 +108,17 @@ export default function ChatPage() {
             : data.source === "yfinance"
               ? "yfinance"
               : (data.source ?? "feed");
+        const summary = data.summary?.trim();
+        const chatAns = data.answer?.trim();
         assistant = {
           id: crypto.randomUUID(),
           role: "assistant",
           mode,
-          text: `Headlines for ${symbol.trim().toUpperCase()} (${srcLabel}): ${n} article(s) below.`,
+          text: chatAns
+            ? chatAns
+            : summary
+              ? summary
+              : `Headlines for ${symbol.trim().toUpperCase()} (${srcLabel}): ${n} article(s) below.`,
           payload: data,
         };
       } else {
@@ -304,7 +313,7 @@ export default function ChatPage() {
             placeholder={
               mode === "education"
                 ? "Ask about the course materials…"
-                : "Optional note (or leave empty to fetch)"
+                : "Ask about this symbol or the data below (optional)…"
             }
             className="flex-1 min-w-0 rounded-xl bg-surface border border-borderline px-4 py-3 text-sm text-foreground placeholder:text-muted outline-none focus:border-accent/40"
             disabled={loading}
@@ -329,6 +338,7 @@ type MarketPayload = {
   resolution?: string;
   quote: Record<string, number | null>;
   candles: { s?: string; t?: number[]; c?: number[] };
+  answer?: string | null;
 };
 
 function MarketQuoteBlock({ data }: { data: MarketPayload }) {
@@ -403,6 +413,8 @@ type NewsPayload = {
   articles: Array<Record<string, unknown>>;
   warning?: string | null;
   source?: string;
+  summary?: string | null;
+  answer?: string | null;
 };
 
 function NewsBlock({ data }: { data: NewsPayload }) {
@@ -447,9 +459,33 @@ type EduPayload = {
     content_preview: string;
     score: number;
     metadata: Record<string, unknown>;
+    file_name?: string;
+    page?: number;
+    highlight?: string;
   }>;
   low_confidence: boolean;
 };
+
+function educationReaderHref(s: EduPayload["sources"][0]): string {
+  const params = new URLSearchParams();
+  const file =
+    s.file_name ||
+    (typeof s.metadata?.source === "string"
+      ? String(s.metadata.source).split(/[/\\]/).pop()
+      : "") ||
+    "Full.pdf";
+  params.set("file", file);
+  const page =
+    typeof s.page === "number"
+      ? s.page
+      : typeof s.metadata?.page === "number"
+        ? s.metadata.page
+        : 1;
+  params.set("page", String(page));
+  const q = (s.highlight || "").trim();
+  if (q) params.set("q", q);
+  return `/textbook?${params.toString()}`;
+}
 
 function EduBlock({ data }: { data: EduPayload }) {
   if (!data.sources?.length) return null;
@@ -459,13 +495,42 @@ function EduBlock({ data }: { data: EduPayload }) {
       {data.low_confidence && (
         <p className="text-xs text-amber-200/80">Low confidence match.</p>
       )}
-      <ul className="space-y-2 text-xs text-muted max-h-40 overflow-y-auto">
+      <ul className="space-y-2 text-xs text-muted max-h-48 overflow-y-auto">
         {data.sources.map((s, i) => (
           <li key={i} className="rounded-lg bg-background/40 p-2">
-            <span className="text-accent/80">score {s.score.toFixed(3)}</span>
-            {s.metadata?.page != null && (
-              <span className="ml-2">page {String(s.metadata.page)}</span>
-            )}
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <span className="text-accent/80">
+                score {s.score.toFixed(3)}
+              </span>
+              <Link
+                href={educationReaderHref(s)}
+                target="_blank"
+                rel="noopener noreferrer"
+                prefetch={false}
+                className="text-xs font-medium text-accent hover:underline"
+              >
+                Open in textbook
+                {s.page != null || s.metadata?.page != null
+                  ? ` · p.${String(s.page ?? s.metadata?.page)}`
+                  : ""}
+              </Link>
+            </div>
+            {(() => {
+              const pathLabel =
+                s.file_name ||
+                (typeof s.metadata?.source === "string"
+                  ? s.metadata.source.split(/[/\\]/).pop()
+                  : "");
+              if (!pathLabel) return null;
+              return (
+                <p
+                  className="mt-0.5 text-[10px] text-muted truncate"
+                  title={s.file_name ?? pathLabel}
+                >
+                  {pathLabel}
+                </p>
+              );
+            })()}
             <p className="mt-1 text-foreground/80">{s.content_preview}</p>
           </li>
         ))}

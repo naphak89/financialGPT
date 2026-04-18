@@ -64,11 +64,16 @@ export async function marketData(body: {
   symbol: string;
   resolution: string;
   days: number;
+  question?: string;
 }) {
   return authFetch("/market/data", { method: "POST", body: JSON.stringify(body) });
 }
 
-export async function newsData(body: { symbol: string; days: number }) {
+export async function newsData(body: {
+  symbol: string;
+  days: number;
+  question?: string;
+}) {
   return authFetch("/news/data", { method: "POST", body: JSON.stringify(body) });
 }
 

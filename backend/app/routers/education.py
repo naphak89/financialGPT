@@ -16,6 +16,9 @@ def ask(body: EducationRequest, current: User = Depends(get_current_user)):
             content_preview=c["content_preview"],
             score=c["score"],
             metadata=c["metadata"],
+            file_name=c.get("file_name", ""),
+            page=int(c.get("page", 1)),
+            highlight=c.get("highlight", ""),
         )
         for c in chunks
     ]

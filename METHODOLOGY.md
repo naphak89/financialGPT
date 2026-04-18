@@ -20,18 +20,26 @@ Headlines come from **`Ticker.news`** first; if that is empty or errors, the bac
 
 ## Education mode and RAG
 
-**Indexing (offline).** Documents are split with a recursive character splitter (chunk size 300, overlap 100 in the tutorial script), with `add_start_index` so offsets into the original file are available where the loader provides them. Chunks are embedded with **NVIDIAEmbeddings** and stored in **Chroma** under **`backend/chroma/`** (same path the FastAPI RAG service reads; override with `CHROMA_PATH` only if needed).
+**Textbook files (web).** PDFs used in the course live under **`frontend/public/textbooks/`** and are served by Next.js at **`/textbooks/<filename>.pdf`**. Keep filenames stable: they are stored in chunk metadata and used by the reader links.
+
+**Indexing (offline).** Run **`python backend/scripts/index_textbooks.py`** from the repo (with NVIDIA embedding credentials in `backend/.env` or `langchain-rag-tutorial/.env`). The script loads each PDF with **`PyPDFLoader`**, splits text **per page** with a recursive character splitter (chunk size 300, overlap 100, `add_start_index=True`), and stores every chunk with at least:
+
+- **`file_name`**: PDF basename (matches `public/textbooks/`)
+- **`page`**: **1-based** page number
+- **`highlight`**: a short whitespace-normalized prefix of the chunk text used as the search string in the PDF reader
+
+Chunks are embedded with **NVIDIAEmbeddings** and written to **Chroma** under **`backend/chroma/`** (override with **`CHROMA_PATH`** only if needed). The older **`langchain-rag-tutorial/create_database.py`** flow is deprecated for this app in favor of the script above.
 
 **Query (online).** When you ask a question, the system:
 
 1. Embeds the question with the same embedding model.
 2. Runs **similarity search with relevance scores** and takes the top **k = 3** chunks.
 3. Compares the **best** chunk’s relevance score to a **minimum threshold of 0.2** (same idea as in the original `query_data.py` script). If nothing clears the bar, the model is not asked to invent an answer from thin air; you get a short fallback message and any low-scoring chunks are still listed for transparency.
-4. If results pass the filter, their text is concatenated into a single context block and passed to **ChatDeepSeek** with a strict prompt: answer **only** from that context.
+4. If results pass the filter, their text is concatenated into a single context block and passed to **ChatDeepSeek** with a prompt that lists numbered sources (file + page) and asks the model to cite **[n]** in the answer.
 
 **Why this is “similarity search”.** Chroma stores chunk vectors. At query time it ranks chunks by closeness to the question vector. The score you see in the API is that relevance signal (higher means a better match in this setup). The threshold is a guard against irrelevant retrieval when the question does not match the corpus.
 
-**Citations.** Each returned chunk includes **metadata** from the loader (for PDFs, `page` and `source` often appear). The frontend surfaces previews and scores so you can trace answers back to the reader.
+**Citations and the reader.** The API returns **`file_name`**, **`page`**, and **`highlight`** for each source chunk. The Next.js **`/textbook`** page opens the PDF in **react-pdf-viewer**, jumps to the cited page, and runs **find/highlight** for the anchor string so users can align the answer with the passage (exact phrase match depends on PDF text extraction; very short strings may match in multiple places).
 
 ## Authentication and feedback
 

@@ -8,12 +8,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent
 
 
+
 def _default_sqlite_url() -> str:
+    
     # Vercel serverless: only /tmp is writable; project dir is read-only → SQLite fails there.
     if os.environ.get("VERCEL"):
+        
         return "sqlite:////tmp/users.db"
     return f"sqlite:///{_BACKEND_ROOT / 'users.db'}"
-
 
 def _default_chroma_path() -> str:
     """Single RAG store: `backend/chroma/` (embeddings + chunks). Override with CHROMA_PATH if needed."""

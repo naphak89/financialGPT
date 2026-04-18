@@ -1,0 +1,34 @@
+# Run from backend/:  docker compose up -d --build
+#
+# 1. Copy .env.example to .env and fill keys (see comments there).
+# 2. Chroma textbook data is baked into the image from ./chroma/
+# 3. User accounts persist in the sqlite volume (mount /data).
+
+services:
+  api:
+    build: .
+    image: financial-gpt-backend:latest
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: sqlite:////data/users.db
+    volumes:
+      - backend-user-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  backend-user-data:

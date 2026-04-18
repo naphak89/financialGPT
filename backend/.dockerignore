@@ -1,0 +1,25 @@
+# Secrets — inject at runtime (compose env_file, -e, or your orchestrator)
+.env
+
+# Python noise
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.venv
+venv
+
+# Git / IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# Local dev DB (image ships without accounts; compose uses a volume for /data)
+users.db
+
+# OS
+Thumbs.db
+.DS_Store
